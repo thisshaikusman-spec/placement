@@ -268,12 +268,12 @@ bool hasCycle(int V, vector<int> adj[]) {
           <div className="lg:col-span-7 flex flex-col gap-space-md">
             {/* Video Viewport Frame */}
             <div className="relative w-full aspect-[16/10] bg-surface-container-highest rounded-2xl overflow-hidden shadow-sm flex flex-col justify-between p-space-md border border-surface-container/60">
-              {/* Background image of realistic AI Interviewer */}
-              <img
-                className="absolute inset-0 w-full h-full object-cover object-top"
-                alt="Senior AI Evaluator Alex"
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuARBy4jgdUA82MQ5UftP2O9wA7z0JePx67T28A1xeu5UWI41CcsYVufPpcQyN0TdubzBER0zf7Jp_UzyQJMYguMFAB2zwPIH9tatbZEwCKJD3AGh_3vCZfdHHa7KVpgIFFQauUijAXqrq3zXAw0kUiQWv0t0wj5xHbpLl24R3e9w1JqSn8QrkHOTUocW_vkvMzq5AoX0ooXXRBkDg56kailfUmvpT6yM7TQ3-pTorNsKc8YcQ_YaTHm"
-              />
+              {/* Evaluator AI Representation */}
+              <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-primary/20 to-tertiary/20 flex items-center justify-center">
+                <span className="material-symbols-outlined text-[120px] text-primary/40 select-none">
+                  smart_toy
+                </span>
+              </div>
 
               {/* Gradient Scrim for readable overlays */}
               <div className="absolute inset-0 bg-gradient-to-t from-inverse-surface/80 via-transparent to-inverse-surface/40 pointer-events-none"></div>
@@ -320,14 +320,21 @@ bool hasCycle(int V, vector<int> adj[]) {
                 {/* Student Picture-in-Picture PIP */}
                 <div className="relative w-28 sm:w-36 aspect-video bg-surface-container-low rounded-xl overflow-hidden shadow-lg border border-white/20">
                   {isCameraOn ? (
-                    <img
-                      className="w-full h-full object-cover"
-                      alt="You (Ananya)"
-                      src="https://lh3.googleusercontent.com/aida-public/AB6AXuD3LQ0iReitCqRUKX6CoQ1TxKYJom1PcBy_uoAi6yB28YH0fVNqtLmuvF4nb_G0iBrkRNWDpEebtPOkfrARqtuREILXxPWkZxR3N5OGYwdxzuW4eo-EkEoA_Uj9jKmYtRfcR7zkDy-63znsynqVWdO3i6DMBXBgVkUYasY_4hyNygAC8SzltX6xlYgTOINx2VgAMd8EdZvE5ncviCUaxhHRSZbi1PaKNeBduUN4-A4Vz9C7oQg1Vb2E"
+                    <video
+                      ref={videoRef}
+                      autoPlay
+                      playsInline
+                      muted
+                      className="w-full h-full object-cover -scale-x-100"
                     />
                   ) : (
                     <div className="w-full h-full bg-slate-800 flex items-center justify-center text-white/60">
                       <span className="material-symbols-outlined text-2xl">videocam_off</span>
+                    </div>
+                  )}
+                  {cameraError && (
+                    <div className="absolute inset-0 bg-black/80 flex items-center justify-center p-2 text-center text-[10px] text-red-400">
+                      {cameraError}
                     </div>
                   )}
                   <div className="absolute bottom-1 left-2 font-label-sm text-[10px] text-surface-container-lowest bg-inverse-surface/70 px-1.5 py-0.5 rounded">

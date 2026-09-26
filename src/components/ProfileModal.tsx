@@ -5,12 +5,14 @@ interface ProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
   onNavigateToDecoders: () => void;
+  onLogout?: () => void;
 }
 
 export const ProfileModal: React.FC<ProfileModalProps> = ({
   isOpen,
   onClose,
   onNavigateToDecoders,
+  onLogout,
 }) => {
   if (!isOpen) return null;
 
@@ -105,12 +107,25 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
             <span>View Target Company Decoders</span>
             <span className="material-symbols-outlined text-sm">arrow_forward</span>
           </button>
-          <button
-            onClick={onClose}
-            className="px-space-md py-2 rounded-xl bg-primary text-on-primary text-xs font-bold shadow hover:bg-primary-container cursor-pointer"
-          >
-            Done
-          </button>
+          <div className="flex items-center gap-2">
+            {onLogout && (
+              <button
+                type="button"
+                onClick={onLogout}
+                className="px-3 py-2 rounded-xl text-error hover:bg-error-container/40 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1"
+                title="Log out of PlacementIQ"
+              >
+                <span className="material-symbols-outlined text-sm">logout</span>
+                <span>Log Out</span>
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="px-space-md py-2 rounded-xl bg-primary text-on-primary text-xs font-bold shadow hover:bg-primary-container cursor-pointer"
+            >
+              Done
+            </button>
+          </div>
         </div>
       </div>
     </div>
