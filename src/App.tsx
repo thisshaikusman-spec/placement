@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import Login from './pages/Login';
+
 import { TabType } from './types';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
@@ -17,7 +17,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem('isLoggedIn'));
+
   // Sync with browser URL hash
   useEffect(() => {
     const handleHashChange = () => {
@@ -50,9 +50,6 @@ export default function App() {
   };
 
   return (
-    !isLoggedIn ? (
-      <Login />
-    ) : (
       <div className="min-h-screen bg-surface flex flex-col font-body-md text-on-surface antialiased selection:bg-primary-fixed selection:text-on-primary-fixed">
         {/* Top Fixed Header */}
         <Navbar
@@ -89,8 +86,8 @@ export default function App() {
           onClose={() => setIsNotificationsOpen(false)}
           onNavigate={handleTabChange}
         />
-      </div>
-    )
+
+
   );
 
 }
