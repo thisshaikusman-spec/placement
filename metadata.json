@@ -1,0 +1,7 @@
+{
+  "name": "PlacementIQ - Campus Placement Readiness Platform",
+  "description": "Comprehensive campus placement readiness platform with predictive scoring, DSA practice with live voice check, AI mock interviews, performance analytics, company decoders, and peer pods.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
