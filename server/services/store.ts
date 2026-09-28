@@ -11,14 +11,17 @@ import os from 'os';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+function getDataDir(): string {
+  if (process.env.VERCEL) {
+    return path.join(os.tmpdir(), 'placementiq-data');
+  }
+  const __dirname = path.dirname(fileURLToPath(import.meta.url));
+  return path.resolve(__dirname, '../data');
+}
 
-// On Vercel use /tmp; otherwise use server/data (local dev).
-const DATA_DIR = process.env.VERCEL
-  ? path.join(os.tmpdir(), 'placementiq-data')
-  : path.resolve(__dirname, '../data');
-
-const DB_FILE = path.join(DATA_DIR, 'users.json');
+function getDbFile(): string {
+  return path.join(getDataDir(), 'users.json');
+}
 
 export interface UserProfile {
   userId: string;
@@ -37,13 +40,15 @@ type DB = Record<string, UserProfile>;
 
 function ensureDb(): DB {
   try {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
+    const dataDir = getDataDir();
+    const dbFile = getDbFile();
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
     }
-    if (!fs.existsSync(DB_FILE)) {
-      fs.writeFileSync(DB_FILE, JSON.stringify({}, null, 2), 'utf-8');
+    if (!fs.existsSync(dbFile)) {
+      fs.writeFileSync(dbFile, JSON.stringify({}, null, 2), 'utf-8');
     }
-    const raw = fs.readFileSync(DB_FILE, 'utf-8');
+    const raw = fs.readFileSync(dbFile, 'utf-8');
     try {
       return JSON.parse(raw) as DB;
     } catch {
@@ -57,7 +62,12 @@ function ensureDb(): DB {
 
 function writeDb(db: DB): void {
   try {
-    fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2), 'utf-8');
+    const dataDir = getDataDir();
+    const dbFile = getDbFile();
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
+    fs.writeFileSync(dbFile, JSON.stringify(db, null, 2), 'utf-8');
   } catch (err) {
     console.warn('[store] writeDb failed (filesystem unavailable?):', err);
   }

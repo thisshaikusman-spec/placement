@@ -6,15 +6,19 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+try {
+  dotenv.config({ path: path.resolve(__dirname, '../.env') });
+} catch {
+  // Ignore error if .env file is missing
+}
 
-import healthRouter from './routes/health';
-import resumeAnalyzerRouter from './routes/resumeAnalyzer';
-import skillGapRouter from './routes/skillGap';
-import prepPlanRouter from './routes/prepPlan';
-import questionGenRouter from './routes/questionGen';
-import interviewEvalRouter from './routes/interviewEval';
-import interviewChatRouter from './routes/interviewChat';
+import healthRouter from './routes/health.js';
+import resumeAnalyzerRouter from './routes/resumeAnalyzer.js';
+import skillGapRouter from './routes/skillGap.js';
+import prepPlanRouter from './routes/prepPlan.js';
+import questionGenRouter from './routes/questionGen.js';
+import interviewEvalRouter from './routes/interviewEval.js';
+import interviewChatRouter from './routes/interviewChat.js';
 
 const app = express();
 const PORT = process.env.PORT || 4000;

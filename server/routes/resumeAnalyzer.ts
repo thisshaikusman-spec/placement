@@ -1,8 +1,8 @@
 // server/routes/resumeAnalyzer.ts
 import { Router } from 'express';
-import { askGeminiJSON } from '../services/geminiClient';
-import { buildResumeAnalyzerPrompt } from '../prompts/resumeAnalyzer';
-import { updateUser } from '../services/store';
+import { askGeminiJSON } from '../services/geminiClient.js';
+import { buildResumeAnalyzerPrompt } from '../prompts/resumeAnalyzer.js';
+import { updateUser } from '../services/store.js';
 
 const router = Router();
 
