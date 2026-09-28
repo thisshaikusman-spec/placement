@@ -52,7 +52,12 @@ app.use('/api', (_req, res) => {
   res.status(404).json({ error: 'Unknown API route' });
 });
 
-app.listen(PORT, () => {
-  console.log(`PlacementIQ backend listening on http://localhost:${PORT}`);
-  console.log(`Health check: http://localhost:${PORT}/api/health`);
-});
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`PlacementIQ backend listening on http://localhost:${PORT}`);
+    console.log(`Health check: http://localhost:${PORT}/api/health`);
+  });
+}
+
+export default app;
+
