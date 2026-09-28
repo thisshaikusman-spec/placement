@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { USER_PROFILE } from '../data/mockData';
+import { useUser, AppUser } from '../context/UserContext';
+import Avatar from './Avatar';
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -8,35 +10,136 @@ interface ProfileModalProps {
   onLogout?: () => void;
 }
 
+const resizeImageToDataUrl = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 256;
+        canvas.height = 256;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Canvas context not available'));
+          return;
+        }
+        // Center crop to 1:1 aspect ratio before drawing 256x256
+        const minDim = Math.min(img.width, img.height);
+        const sx = (img.width - minDim) / 2;
+        const sy = (img.height - minDim) / 2;
+        ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, 256, 256);
+        resolve(canvas.toDataURL('image/png'));
+      };
+      img.onerror = () => reject(new Error('Failed to load image'));
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsDataURL(file);
+  });
+};
+
 export const ProfileModal: React.FC<ProfileModalProps> = ({
   isOpen,
   onClose,
   onNavigateToDecoders,
   onLogout,
 }) => {
+  const { displayName, user, setUser } = useUser();
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   if (!isOpen) return null;
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Reset input value so re-selecting the same file fires onChange
+    e.target.value = '';
+
+    if (!file.type.startsWith('image/')) {
+      setUploadError('Images only: please select an image file.');
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      setUploadError('Image size exceeds maximum allowed size of 2 MB.');
+      return;
+    }
+
+    setUploadError(null);
+
+    try {
+      const dataUrl = await resizeImageToDataUrl(file);
+      const updatedUser: AppUser = {
+        name: user?.name || displayName || USER_PROFILE.fullName,
+        email: user?.email || '',
+        avatarUrl: dataUrl,
+      };
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+    } catch (err) {
+      console.error('Photo resize error:', err);
+      setUploadError('Failed to process image. Please try again.');
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-on-surface/40 backdrop-blur-sm animate-fadeIn">
       <div className="bg-surface-container-lowest rounded-2xl max-w-lg w-full p-space-xl shadow-xl border border-surface-container flex flex-col gap-space-lg">
+        {/* Hidden file input */}
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          accept="image/*"
+          className="hidden"
+          aria-hidden="true"
+        />
+
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-space-md">
-            <img
-              src={USER_PROFILE.avatarUrl}
-              alt={USER_PROFILE.fullName}
-              className="w-16 h-16 rounded-full object-cover ring-4 ring-primary-fixed shadow-sm"
-            />
+            <div className="relative group shrink-0">
+              <Avatar
+                user={user}
+                size={64}
+                className="ring-4 ring-primary-fixed shadow-sm"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="absolute -bottom-1 -right-1 p-1.5 bg-surface-container-lowest text-primary hover:bg-primary hover:text-white rounded-full shadow border border-surface-container transition-colors cursor-pointer flex items-center justify-center"
+                title="Change photo"
+                aria-label="Change photo"
+              >
+                <span className="material-symbols-outlined text-sm leading-none">photo_camera</span>
+              </button>
+            </div>
             <div>
-              <h2 className="font-headline-lg text-xl font-bold text-on-surface">
-                {USER_PROFILE.fullName}
-              </h2>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="font-headline-lg text-xl font-bold text-on-surface">
+                  {displayName || USER_PROFILE.fullName}
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="text-xs font-semibold text-primary hover:underline cursor-pointer flex items-center gap-1"
+                >
+                  <span className="material-symbols-outlined text-xs">edit</span>
+                  <span>Change photo</span>
+                </button>
+              </div>
               <p className="font-body-sm text-xs text-on-surface-variant">
-                {USER_PROFILE.branch}
+                {user?.email || USER_PROFILE.branch}
               </p>
               <span className="font-label-sm text-xs font-semibold text-primary">
                 {USER_PROFILE.college}
               </span>
+              {uploadError && (
+                <p className="text-[11px] text-error font-medium mt-1">{uploadError}</p>
+              )}
             </div>
           </div>
           <button

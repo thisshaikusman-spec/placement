@@ -14,12 +14,28 @@ import skillGapRouter from './routes/skillGap';
 import prepPlanRouter from './routes/prepPlan';
 import questionGenRouter from './routes/questionGen';
 import interviewEvalRouter from './routes/interviewEval';
+import interviewChatRouter from './routes/interviewChat';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
 // Middleware
-app.use(cors({ origin: 'http://localhost:3000' }));
+const allowedOrigins = [
+  'http://localhost:3000',
+  ...(process.env.CLIENT_ORIGIN ? [process.env.CLIENT_ORIGIN] : []),
+];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+  })
+);
 app.use(express.json({ limit: '2mb' }));
 
 // Routes
@@ -29,6 +45,7 @@ app.use('/api/agents/skill-gap', skillGapRouter);
 app.use('/api/agents/prep-plan', prepPlanRouter);
 app.use('/api/agents/question-gen', questionGenRouter);
 app.use('/api/agents/interview-eval', interviewEvalRouter);
+app.use('/api/agents/interview-chat', interviewChatRouter);
 
 // Fallback 404 for unknown API routes
 app.use('/api', (_req, res) => {

@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { POD_MEMBERS, INITIAL_POD_POSTS, USER_PROFILE } from '../data/mockData';
 import { PodPost } from '../types';
+import { useUser } from '../context/UserContext';
+import Avatar from './Avatar';
 
 export const PeerPod: React.FC = () => {
+  const { user, displayName } = useUser();
   const [posts, setPosts] = useState<PodPost[]>(INITIAL_POD_POSTS);
   const [newPostText, setNewPostText] = useState('');
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
@@ -16,8 +19,8 @@ export const PeerPod: React.FC = () => {
 
     const newPost: PodPost = {
       id: `post-${Date.now()}`,
-      author: 'Ananya',
-      authorAvatar: USER_PROFILE.avatarUrl,
+      author: displayName || user?.name || 'Ananya',
+      authorAvatar: user?.avatarUrl || '',
       badge: 'You',
       isCurrentUser: true,
       timeAgo: 'Just now',
@@ -191,13 +194,21 @@ export const PeerPod: React.FC = () => {
               >
                 <div className="flex items-start justify-between">
                   <div className="relative">
-                    <img
-                      className={`w-11 h-11 rounded-full object-cover shadow-sm ${
-                        member.isCurrentUser ? 'ring-2 ring-primary' : ''
-                      }`}
-                      alt={member.name}
-                      src={member.avatar}
-                    />
+                    {member.isCurrentUser ? (
+                      <Avatar
+                        user={user}
+                        size={44}
+                        className={member.isCurrentUser ? 'ring-2 ring-primary shadow-sm' : ''}
+                      />
+                    ) : (
+                      <img
+                        className={`w-11 h-11 rounded-full object-cover shadow-sm ${
+                          member.isCurrentUser ? 'ring-2 ring-primary' : ''
+                        }`}
+                        alt={member.name}
+                        src={member.avatar}
+                      />
+                    )}
                     <span
                       className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full ring-2 ring-surface-container-lowest ${
                         member.isCompleted ? 'bg-tertiary' : 'bg-secondary'
@@ -296,15 +307,23 @@ export const PeerPod: React.FC = () => {
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-space-sm">
-                        <img
-                          className="w-10 h-10 rounded-full object-cover shadow-sm ring-1 ring-primary-fixed"
-                          alt={post.author}
-                          src={post.authorAvatar}
-                        />
+                        {post.isCurrentUser ? (
+                          <Avatar
+                            user={user}
+                            size={40}
+                            className="shadow-sm ring-1 ring-primary-fixed"
+                          />
+                        ) : (
+                          <img
+                            className="w-10 h-10 rounded-full object-cover shadow-sm ring-1 ring-primary-fixed"
+                            alt={post.author}
+                            src={post.authorAvatar}
+                          />
+                        )}
                         <div>
                           <div className="flex items-center gap-space-xs">
                             <span className="font-headline-md text-sm font-bold text-on-surface">
-                              {post.author}
+                              {post.isCurrentUser ? (displayName || post.author) : post.author}
                             </span>
                             {post.badge && (
                               <span
@@ -503,16 +522,25 @@ export const PeerPod: React.FC = () => {
                       >
                         {index + 1}
                       </span>
-                      <img
-                        className={`w-9 h-9 rounded-full object-cover ${
-                          member.isCurrentUser ? 'ring-2 ring-primary' : ''
-                        }`}
-                        alt={member.name}
-                        src={member.avatar}
-                      />
+                      {member.isCurrentUser ? (
+                        <Avatar
+                          user={user}
+                          size={36}
+                          className="ring-2 ring-primary shrink-0"
+                        />
+                      ) : (
+                        <img
+                          className={`w-9 h-9 rounded-full object-cover shrink-0 ${
+                            member.isCurrentUser ? 'ring-2 ring-primary' : ''
+                          }`}
+                          alt={member.name}
+                          src={member.avatar}
+                        />
+                      )}
                       <div>
                         <div className="font-label-md text-xs font-bold text-on-surface">
-                          {member.name} {member.isCurrentUser && '(You)'}
+                          {member.isCurrentUser ? (displayName || member.name) : member.name}{' '}
+                          {member.isCurrentUser && '(You)'}
                         </div>
                         <div className="font-body-sm text-[11px] text-primary font-medium">
                           {member.streakTitle}

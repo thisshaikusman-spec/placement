@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { TabType } from '../types';
 import { USER_PROFILE } from '../data/mockData';
+import { useUser } from '../context/UserContext';
 
 interface DashboardProps {
   onNavigate: (tab: TabType) => void;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
+  const { displayName } = useUser();
   const [tipModalOpen, setTipModalOpen] = useState(false);
   const [currentTipIndex, setCurrentTipIndex] = useState(0);
 
@@ -53,7 +55,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                 </span>
               </div>
               <h1 className="font-headline-xl text-3xl font-bold text-on-surface tracking-tight mt-1">
-                Welcome back, {USER_PROFILE.name}!{' '}
+                Welcome back, {displayName || USER_PROFILE.name}!{' '}
                 <span className="inline-block transform hover:rotate-12 transition-transform duration-200 cursor-pointer">
                   👋
                 </span>

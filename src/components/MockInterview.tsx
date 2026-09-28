@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { TabType } from '../types';
+import { useUser } from '../context/UserContext';
 
 interface MockInterviewProps {
   onNavigate: (tab: TabType) => void;
@@ -14,6 +15,8 @@ interface Message {
 }
 
 export const MockInterview: React.FC<MockInterviewProps> = ({ onNavigate }) => {
+  const { user, displayName } = useUser();
+  const candidateName = displayName || 'You';
   const [timerSeconds, setTimerSeconds] = useState(24 * 60 + 18);
   const [isPaused, setIsPaused] = useState(false);
   const [selectedMood, setSelectedMood] = useState<number>(3);
@@ -52,6 +55,7 @@ export const MockInterview: React.FC<MockInterviewProps> = ({ onNavigate }) => {
   // Tabs: Transcript vs Scratchpad
   const [activeTab, setActiveTab] = useState<'transcript' | 'scratchpad'>('transcript');
   const [candidateInput, setCandidateInput] = useState('');
+  const [isAlexThinking, setIsAlexThinking] = useState(false);
   const [scratchpadCode, setScratchpadCode] = useState(
     `// Write helper notes or pseudocode here...
 bool hasCycle(int V, vector<int> adj[]) {
@@ -65,32 +69,38 @@ bool hasCycle(int V, vector<int> adj[]) {
   const [showEndModal, setShowEndModal] = useState(false);
   const [isEvaluating, setIsEvaluating] = useState(false);
 
-  // Messages list
+  // Messages list - opening question from Alex
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'm1',
       sender: 'alex',
       senderName: 'Alex',
       time: '10:14 AM',
-      text: 'Welcome Ananya. Can you explain how you would detect a cycle in a directed graph?',
-    },
-    {
-      id: 'm2',
-      sender: 'candidate',
-      senderName: 'Ananya',
-      time: '10:15 AM',
-      text: "Sure! For directed graphs, we can use Depth-First Search with recursion stack tracking, or Kahn's algorithm using indegree array with a queue...",
-    },
-    {
-      id: 'm3',
-      sender: 'alex',
-      senderName: 'Alex',
-      time: 'Just now',
-      text: 'Great start. What would the time complexity be if the graph is represented as an adjacency matrix vs adjacency list?',
+      text: `Welcome ${candidateName}. Can you explain how you would detect a cycle in a directed graph?`,
     },
   ]);
 
   const transcriptEndRef = useRef<HTMLDivElement>(null);
+
+  const getUserId = (): string => {
+    if (user?.email && user.email.trim()) {
+      return user.email.trim();
+    }
+    let guestId = localStorage.getItem('interview_guest_user_id');
+    if (!guestId) {
+      guestId = `guest_${Math.random().toString(36).substring(2, 11)}`;
+      localStorage.setItem('interview_guest_user_id', guestId);
+    }
+    return guestId;
+  };
+
+  const getCurrentTime = (): string => {
+    return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  useEffect(() => {
+    transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, isAlexThinking]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
@@ -118,35 +128,72 @@ bool hasCycle(int V, vector<int> adj[]) {
     5: '“Unstoppable mindset! Crush this round with clean trade-off discussions and edge-case mastery.”',
   };
 
-  const handleSendMessage = () => {
-    if (!candidateInput.trim()) return;
+  const handleSendMessage = async () => {
+    if (!candidateInput.trim() || isAlexThinking) return;
 
     const userText = candidateInput.trim();
     const newMsg: Message = {
       id: `usr-${Date.now()}`,
       sender: 'candidate',
-      senderName: 'Ananya',
-      time: 'Just now',
+      senderName: candidateName,
+      time: getCurrentTime(),
       text: userText,
     };
 
     setMessages((prev) => [...prev, newMsg]);
     setCandidateInput('');
+    setIsAlexThinking(true);
 
-    // Simulate AI response after short delay
-    setTimeout(() => {
+    try {
+      const historyPayload = messages.map((m) => ({
+        sender: m.sender,
+        text: m.text,
+      }));
+
+      const apiUrl = `${import.meta.env.VITE_API_URL ?? 'http://localhost:4000'}/api/agents/interview-chat`;
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: getUserId(),
+          round: 'Technical Round 2: Data Structures & Problem Solving',
+          history: historyPayload,
+          message: userText,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server returned HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      const reply = data.reply;
+
+      if (!reply || typeof reply !== 'string') {
+        throw new Error('Invalid reply format from server');
+      }
+
       const alexResponse: Message = {
         id: `alex-${Date.now()}`,
         sender: 'alex',
         senderName: 'Alex',
-        time: 'Just now',
-        text:
-          userText.toLowerCase().includes('matrix') || userText.toLowerCase().includes('list')
-            ? 'Exactly. For an adjacency matrix, scanning all potential edges requires O(V²) time regardless of edge density. With an adjacency list, traversal drops to O(V + E), which is significantly superior for sparse campus-scale graphs. How would you handle disconnected subgraphs?'
-            : 'Good insight! In addition to that, notice how space complexity shifts between O(V²) for dense matrices and O(V + E) for adjacency lists. Can you walk me through the code logic for the indegree queue?',
+        time: getCurrentTime(),
+        text: reply,
       };
       setMessages((prev) => [...prev, alexResponse]);
-    }, 1500);
+    } catch (err) {
+      console.error('[MockInterview] Interview chat error:', err);
+      const fallbackMsg: Message = {
+        id: `alex-${Date.now()}`,
+        sender: 'alex',
+        senderName: 'Alex',
+        time: getCurrentTime(),
+        text: 'I lost connection for a moment. Please send that again.',
+      };
+      setMessages((prev) => [...prev, fallbackMsg]);
+    } finally {
+      setIsAlexThinking(false);
+    }
   };
 
   const handleConfirmEnd = () => {
@@ -338,7 +385,7 @@ bool hasCycle(int V, vector<int> adj[]) {
                     </div>
                   )}
                   <div className="absolute bottom-1 left-2 font-label-sm text-[10px] text-surface-container-lowest bg-inverse-surface/70 px-1.5 py-0.5 rounded">
-                    You (Ananya)
+                    You ({candidateName})
                   </div>
                   <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-tertiary-fixed-dim ring-1 ring-surface-container-lowest"></div>
                 </div>
@@ -470,6 +517,26 @@ bool hasCycle(int V, vector<int> adj[]) {
                     </div>
                   ))}
 
+                  {/* Alex Thinking Indicator */}
+                  {isAlexThinking && (
+                    <div className="flex items-start gap-space-sm animate-fadeIn">
+                      <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5 bg-primary-container text-on-primary-container">
+                        A
+                      </div>
+                      <div className="flex flex-col gap-1 max-w-[85%]">
+                        <div className="flex items-center gap-space-xs">
+                          <span className="font-label-sm text-xs font-semibold text-on-surface">
+                            Alex
+                          </span>
+                        </div>
+                        <div className="p-space-md rounded-2xl text-xs font-body-sm leading-relaxed bg-surface-container-low text-on-surface rounded-tl-sm flex items-center gap-2">
+                          <span className="inline-block w-2 h-2 rounded-full bg-primary animate-pulse" />
+                          <span className="italic text-on-surface-variant">Alex is thinking...</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* AI Whisper Tip */}
                   <div className="w-full bg-surface-container rounded-xl p-space-sm flex items-start gap-space-sm shadow-sm border border-surface-container/60 mt-2">
                     <span className="material-symbols-outlined text-primary text-xl mt-0.5 flex-shrink-0">
@@ -514,14 +581,21 @@ bool hasCycle(int V, vector<int> adj[]) {
                 <input
                   value={candidateInput}
                   onChange={(e) => setCandidateInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                  className="flex-1 bg-surface-container-low rounded-xl px-space-md py-2 text-xs text-on-surface placeholder:text-on-surface-variant/60 focus:outline-none focus:ring-1 focus:ring-primary border border-surface-container/30"
-                  placeholder="Or type an answer / clarification..."
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !isAlexThinking) {
+                      handleSendMessage();
+                    }
+                  }}
+                  disabled={isAlexThinking}
+                  className="flex-1 bg-surface-container-low rounded-xl px-space-md py-2 text-xs text-on-surface placeholder:text-on-surface-variant/60 focus:outline-none focus:ring-1 focus:ring-primary border border-surface-container/30 disabled:opacity-75"
+                  placeholder={isAlexThinking ? 'Alex is thinking...' : 'Or type an answer / clarification...'}
                   type="text"
                 />
                 <button
                   onClick={handleSendMessage}
-                  className="p-2 bg-primary text-on-primary rounded-xl hover:bg-primary-container transition-colors flex items-center justify-center cursor-pointer shadow-sm"
+                  disabled={isAlexThinking || !candidateInput.trim()}
+                  className="p-2 bg-primary text-on-primary rounded-xl hover:bg-primary-container transition-colors flex items-center justify-center cursor-pointer shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  aria-label="Send message"
                 >
                   <span className="material-symbols-outlined text-base">send</span>
                 </button>

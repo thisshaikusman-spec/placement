@@ -14,6 +14,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { LOGO_URL } from '../data/mockData';
+import { supabase } from '../lib/supabaseClient';
 
 function GoogleIcon({ className }: { className?: string }) {
   return (
@@ -27,7 +28,7 @@ function GoogleIcon({ className }: { className?: string }) {
 }
 
 interface LoginProps {
-  onLogin?: () => void;
+  onLogin?: (name: string, email: string, avatarUrl?: string) => void;
 }
 
 export default function Login({ onLogin }: LoginProps) {
@@ -52,10 +53,9 @@ export default function Login({ onLogin }: LoginProps) {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSuccessfulEntry = () => {
-    localStorage.setItem('isLoggedIn', 'true');
+  const handleSuccessfulEntry = (name: string, entryEmail: string, avatarUrl?: string) => {
     if (onLogin) {
-      onLogin();
+      onLogin(name, entryEmail, avatarUrl);
     } else {
       window.location.hash = '#dashboard';
     }
@@ -68,11 +68,24 @@ export default function Login({ onLogin }: LoginProps) {
     // Simulate auth latency
     await new Promise((r) => setTimeout(r, 600));
     setLoading(false);
-    handleSuccessfulEntry();
+    // Derive name from the email prefix
+    const prefix = email.split('@')[0] ?? '';
+    const derivedName = prefix.charAt(0).toUpperCase() + prefix.slice(1);
+    handleSuccessfulEntry(derivedName, email.trim());
   };
 
   const handleDemoAccess = () => {
-    handleSuccessfulEntry();
+    handleSuccessfulEntry('Ananya Sharma', 'ananya.sharma@tier1.edu');
+  };
+
+  const handleGoogleSignIn = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin + window.location.pathname,
+      },
+    });
+    // After redirect, App.tsx picks up the session via onAuthStateChange.
   };
 
   const handleFillDemoCredentials = () => {
@@ -316,7 +329,7 @@ export default function Login({ onLogin }: LoginProps) {
             <div className="mt-4">
               <button
                 type="button"
-                onClick={handleSuccessfulEntry}
+                onClick={handleGoogleSignIn}
                 className="w-full border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2.5 transition-colors text-xs cursor-pointer"
               >
                 <GoogleIcon className="w-4 h-4" />

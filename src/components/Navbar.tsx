@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { TabType } from '../types';
 import { LOGO_URL, USER_PROFILE } from '../data/mockData';
+import { useUser } from '../context/UserContext';
+import Avatar from './Avatar';
 
 interface NavbarProps {
   activeTab: TabType;
@@ -15,6 +17,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenNotifications,
   onOpenProfile,
 }) => {
+  const { user, displayName } = useUser();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navItems: { id: TabType; label: string }[] = [
@@ -109,14 +112,10 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Profile Avatar Button */}
           <button
             onClick={onOpenProfile}
-            title={`${USER_PROFILE.fullName} - Profile & Goals`}
+            title={`${displayName || USER_PROFILE.fullName} - Profile & Goals`}
             className="flex items-center ml-space-xs rounded-full ring-2 ring-primary-fixed hover:ring-primary transition-all cursor-pointer overflow-hidden"
           >
-            <img
-              alt="Candidate Profile"
-              className="w-8 h-8 rounded-full object-cover"
-              src={USER_PROFILE.avatarUrl}
-            />
+            <Avatar user={user} size={32} />
           </button>
 
           {/* Mobile menu toggle */}
