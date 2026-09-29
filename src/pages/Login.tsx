@@ -9,7 +9,6 @@ import {
   MessageSquare,
   BarChart2,
   Sparkles,
-  ArrowRight,
   ShieldCheck,
   CheckCircle2,
 } from 'lucide-react';
@@ -72,10 +71,6 @@ export default function Login({ onLogin }: LoginProps) {
     const prefix = email.split('@')[0] ?? '';
     const derivedName = prefix.charAt(0).toUpperCase() + prefix.slice(1);
     handleSuccessfulEntry(derivedName, email.trim());
-  };
-
-  const handleDemoAccess = () => {
-    handleSuccessfulEntry('Ananya Sharma', 'ananya.sharma@tier1.edu');
   };
 
   const handleGoogleSignIn = async () => {
@@ -181,33 +176,8 @@ export default function Login({ onLogin }: LoginProps) {
               </p>
             </div>
 
-            {/* DEMO BUTTON: Instant Access without credentials */}
-            <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/80 shadow-sm">
-              <div className="flex items-center justify-between gap-2 mb-2">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-blue-900 uppercase tracking-wider">
-                  <Sparkles className="w-4 h-4 text-blue-600" />
-                  <span>Instant Demo Mode</span>
-                </div>
-                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
-                  No Sign-in Needed
-                </span>
-              </div>
-              <p className="text-xs text-slate-600 mb-3">
-                Experience all modules directly as candidate <strong>Ananya Sharma</strong> (Tier-1 SDE Aspirant).
-              </p>
-              <button
-                type="button"
-                id="demo-access-btn"
-                onClick={handleDemoAccess}
-                className="w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-800 text-white font-semibold py-3 px-4 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 group cursor-pointer"
-              >
-                <span>Enter Demo Dashboard</span>
-                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-              </button>
-            </div>
-
             {/* Divider */}
-            <div className="relative flex items-center justify-center my-6">
+            <div className="relative flex items-center justify-center mb-6">
               <div className="border-t border-slate-200 w-full" />
               <span className="bg-white px-3 text-xs uppercase font-medium text-slate-400 absolute">
                 Or sign in with email
